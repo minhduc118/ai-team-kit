@@ -11,7 +11,7 @@ import {
   buildMcp, info, isGitWorkTree, ok, readJson, removeBlock, tryOutput, upsertBlock, warn, writeJson, writeText,
 } from './lib.js';
 import {
-  ANTIGRAVITY_WORKFLOW_LIMIT, agentFile, antigravityRule, antigravityWorkflow,
+  agentFile, antigravityRule,
   readPersonas, readRules, readSkills, rulesBlock,
 } from './render.js';
 
@@ -127,13 +127,8 @@ function installClaude(env, skills, personas, rules) {
 function installAntigravity(env, skills, rules) {
   const t = IDE.antigravity;
   for (const s of skills) copyDir(s.dir, path.join(t.skills, s.name));
-  ok(`${skills.length} skill → ${t.skills}`);
-  for (const s of skills) {
-    const wf = antigravityWorkflow(s);
-    if (wf.length > ANTIGRAVITY_WORKFLOW_LIMIT) warn(`Workflow ${s.name} dài ${wf.length} ký tự (> ${ANTIGRAVITY_WORKFLOW_LIMIT}) — Antigravity có thể cắt bớt.`);
-    writeText(path.join(t.workflows, `${s.name}.md`), wf);
-  }
-  ok(`${skills.length} workflow /sep-* → ${t.workflows}`);
+  ok(`${skills.length} skill /sep-* → ${t.skills}`);
+  if (removeLegacyWorkflows(t, skills)) ok('Đã gỡ workflow /sep-* kiểu cũ (skill thay thế, tránh lệnh trùng)');
   for (const r of rules) writeText(path.join(t.rules, `sep-kit-${r.name}.md`), antigravityRule(r));
   ok(`${rules.length} rule → ${t.rules}`);
   mergeMcpJson(t.mcp, env);
@@ -143,6 +138,21 @@ function installAntigravity(env, skills, rules) {
     ok(`MCP "${SERVER_NAME}" → ${t.legacyMcp} (bản Antigravity cũ)`);
   }
   info('Antigravity không có sub-agent tuỳ biến: /sep-verify-spec sẽ tự đóng vai persona qua sep_xem_persona.');
+}
+
+/** @returns true when at least one old workflow file was removed */
+function removeLegacyWorkflows(t, skills) {
+  let removed = false;
+  for (const dir of t.legacyWorkflows ?? []) {
+    for (const s of skills) {
+      const file = path.join(dir, `${s.name}.md`);
+      if (fs.existsSync(file)) {
+        fs.rmSync(file, { force: true });
+        removed = true;
+      }
+    }
+  }
+  return removed;
 }
 
 function removeLegacyCommands() {
@@ -220,7 +230,7 @@ export function uninstall(flags) {
     if (t.agents) for (const p of personas) fs.rmSync(path.join(t.agents, `${p.name}.md`), { force: true });
     if (t.mcp && removeMcpJson(t.mcp)) ok(`${t.label}: đã xoá MCP`);
     if (t.legacyMcp && removeMcpJson(t.legacyMcp)) ok(`${t.label}: đã xoá MCP (bản cũ)`);
-    if (t.workflows) for (const s of skills) fs.rmSync(path.join(t.workflows, `${s.name}.md`), { force: true });
+    removeLegacyWorkflows(t, skills);
     if (t.rules) for (const r of rules) fs.rmSync(path.join(t.rules, `sep-kit-${r.name}.md`), { force: true });
     if (t.hooks && fs.existsSync(t.hooks)) {
       const hooks = readJson(t.hooks);
@@ -234,7 +244,7 @@ export function uninstall(flags) {
     }
     if (t.memory) removeBlock(t.memory);
     if (ide === 'claude' && tryOutput('claude', ['--version'])) tryOutput('claude', ['mcp', 'remove', SERVER_NAME, '--scope', 'user']);
-    ok(`${t.label}: đã gỡ skills, persona, workflow, rules, hooks`);
+    ok(`${t.label}: đã gỡ skills, persona, rules, hooks`);
   }
   removeLegacyCommands();
   fs.rmSync(CONFIG_FILE, { force: true });

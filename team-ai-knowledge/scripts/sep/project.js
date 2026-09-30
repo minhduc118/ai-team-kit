@@ -1,6 +1,7 @@
 /**
  * `sep init <repo>` — onboard a code repo: project rules for Cursor (.cursor/rules) and Antigravity
- * (.agents/rules + .agents/workflows) plus a short pointer block in AGENTS.md.
+ * (.agents/rules) plus a short pointer block in AGENTS.md. /sep-* commands come from the user-level
+ * skills installed by `sep install`.
  * Re-running refreshes generated files; content outside the sep-kit markers is never touched.
  * `--remove` deletes what init generated.
  */
@@ -8,7 +9,7 @@
 import fs from 'fs';
 import path from 'path';
 import { KB_ROOT, info, isGitWorkTree, ok, removeBlock, upsertBlock, warn, writeText } from './lib.js';
-import { antigravityRule, antigravityWorkflow, cursorRule, readRules, readSkills } from './render.js';
+import { antigravityRule, cursorRule, readRules, readSkills } from './render.js';
 
 const PREFIX = 'sep-kit-';
 
@@ -40,16 +41,19 @@ export function initProject(target, flags) {
   const dirs = {
     cursorRules: path.join(repo, '.cursor', 'rules'),
     agRules: path.join(repo, '.agents', 'rules'),
+    /** Written by older kit versions; Antigravity retires workflows on 2026-11-01 */
     agWorkflows: path.join(repo, '.agents', 'workflows'),
   };
-  const skills = readSkills();
+  const removeLegacyWorkflows = () => {
+    for (const s of readSkills()) fs.rmSync(path.join(dirs.agWorkflows, `${s.name}.md`), { force: true });
+  };
 
   if (flags.remove) {
     clearGenerated(dirs.cursorRules, '.mdc');
     clearGenerated(dirs.agRules, '.md');
-    for (const s of skills) fs.rmSync(path.join(dirs.agWorkflows, `${s.name}.md`), { force: true });
+    removeLegacyWorkflows();
     removeBlock(path.join(repo, 'AGENTS.md'));
-    ok(`Đã gỡ rules/workflows SEP khỏi ${repo}`);
+    ok(`Đã gỡ rules SEP khỏi ${repo}`);
     return;
   }
 
@@ -61,8 +65,7 @@ export function initProject(target, flags) {
     writeText(path.join(dirs.agRules, `${PREFIX}${r.name}.md`), antigravityRule(r));
   }
   ok(`${rules.length} rule → .cursor/rules, .agents/rules`);
-  for (const s of skills) writeText(path.join(dirs.agWorkflows, `${s.name}.md`), antigravityWorkflow(s));
-  ok(`${skills.length} workflow → .agents/workflows (Antigravity)`);
+  removeLegacyWorkflows();
   upsertBlock(path.join(repo, 'AGENTS.md'), agentsPointer(rules));
   ok('AGENTS.md: khối "Quy trình SEP"');
 

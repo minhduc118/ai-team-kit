@@ -7,7 +7,7 @@ import {
   HOOK_SCRIPT, IDE, KB_ROOT, MCP_DIR, MCP_ENTRY, SEP_HOME, SERVER_NAME,
   isGitWorkTree, loadMcp, readJson, tryOutput,
 } from './lib.js';
-import { ANTIGRAVITY_WORKFLOW_LIMIT, antigravityWorkflow, readPersonas, readSkills } from './render.js';
+import { readPersonas, readSkills } from './render.js';
 import { readInstallConfig } from './install.js';
 
 const REQUIRED_PERSONAS = ['sep-skeptic', 'sep-guardian', 'sep-advocate', 'sep-codebase'];
@@ -93,8 +93,7 @@ export async function validate(flags = {}) {
     const fm = matter(s.raw).data;
     if (fm.name !== s.name) errors.push(`skill ${s.name}: frontmatter name = "${fm.name}"`);
     if (!s.description) errors.push(`skill ${s.name}: thiếu description`);
-    const len = antigravityWorkflow(s).length;
-    if (len > ANTIGRAVITY_WORKFLOW_LIMIT) warnings.push(`skill ${s.name}: ${len} ký tự > ${ANTIGRAVITY_WORKFLOW_LIMIT} (giới hạn workflow Antigravity)`);
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(s.name)) errors.push(`skill ${s.name}: tên phải là chữ thường, số, gạch nối (chuẩn Agent Skills)`);
   }
 
   for (const w of warnings) console.log(`  ⚠️  ${w}`);
@@ -203,9 +202,9 @@ export async function doctor() {
       const missing = personas.filter(p => !fs.existsSync(path.join(t.agents, `${p}.md`)));
       check(!missing.length, `Persona sub-agent (${personas.length - missing.length}/${personas.length})`, 'cài lại');
     }
-    if (t.workflows) {
-      const missing = skills.filter(s => !fs.existsSync(path.join(t.workflows, `${s}.md`)));
-      check(!missing.length, `Workflows /sep-* (${skills.length - missing.length}/${skills.length})`, 'cài lại');
+    if (t.legacyWorkflows) {
+      const stale = t.legacyWorkflows.flatMap(d => skills.map(s => path.join(d, `${s}.md`))).filter(f => fs.existsSync(f));
+      check(!stale.length, 'Không còn workflow /sep-* kiểu cũ (Antigravity ngừng hỗ trợ workflow từ 1/11/2026)', 'npm run sep -- install để dọn');
     }
     if (t.mcp) {
       const server = readJson(t.mcp).mcpServers?.[SERVER_NAME];

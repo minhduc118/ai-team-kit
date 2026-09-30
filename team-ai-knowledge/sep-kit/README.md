@@ -36,10 +36,23 @@ Khởi động lại IDE sau khi cài. `install` tự phát hiện IDE có trên
 | Thành phần | Cursor | Claude Code | Antigravity |
 |---|---|---|---|
 | MCP server `sep` | `~/.cursor/mcp.json` | `claude mcp add` | `~/.gemini/config/mcp_config.json` |
-| Skills `/sep-*` | `~/.cursor/skills/` | `~/.claude/skills/` | `~/.gemini/config/skills/` + `global_workflows/` |
+| Skills `/sep-*` | `~/.cursor/skills/` | `~/.claude/skills/` | `~/.gemini/config/skills/` (dùng chung cho Antigravity 2.0, IDE, CLI) |
 | Persona review | `~/.cursor/agents/` | `~/.claude/agents/` | nhúng trong skill verify-spec |
 | Rules | `init` → `.cursor/rules/*.mdc` | khối trong `~/.claude/CLAUDE.md` | `~/.gemini/config/rules/` + `init` → `.agents/rules/` |
 | Hook telemetry | `~/.cursor/hooks.json` | `~/.claude/settings.json` | — (MCP tự ghi) |
+
+### Dành cho người dùng Antigravity
+
+```bash
+npm run sep -- install --ide=antigravity --user=<github-username> --push
+```
+
+- Mở Antigravity ít nhất một lần trước khi cài (để có thư mục `~/.gemini`), hoặc luôn truyền `--ide=antigravity`.
+- Kiểm tra MCP: bảng agent → `…` → **MCP Servers** → **Manage MCP Servers** → server `sep` phải bật, có 24 tool.
+  Xem cấu hình: **View raw config** (chính là `~/.gemini/config/mcp_config.json`).
+- Gõ `/sep-spec …` trong chat — lệnh đến từ skill ở `~/.gemini/config/skills/`. Kit không còn sinh Workflow
+  vì Antigravity ngừng hỗ trợ Workflow từ 1/11/2026; `install` tự dọn workflow `/sep-*` do bản cũ tạo.
+- Antigravity không có sub-agent tuỳ biến: ở `/sep-verify-spec` agent tự đóng vai lần lượt từng persona (lấy qua `sep_xem_persona`).
 
 | Tuỳ chọn `install` | Ý nghĩa |
 |---|---|

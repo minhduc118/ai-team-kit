@@ -11,8 +11,6 @@ import path from 'path';
 import matter from 'gray-matter';
 import { KIT_DIR, listDirs, listMd } from './lib.js';
 
-export const ANTIGRAVITY_WORKFLOW_LIMIT = 12_000;
-
 const q = s => JSON.stringify(String(s ?? ''));
 
 function frontmatter(fields) {
@@ -78,11 +76,6 @@ export function antigravityRule(rule) {
     description: rule.description,
     globs: rule.apply === 'glob' ? rule.globs : undefined,
   }) + '\n' + rule.body + '\n';
-}
-
-/** Antigravity workflow (/sep-*) generated from a skill */
-export function antigravityWorkflow(skill) {
-  return frontmatter({ description: skill.description }) + '\n' + skill.body + '\n';
 }
 
 /** Sub-agent file for Cursor (~/.cursor/agents) or Claude Code (~/.claude/agents) */

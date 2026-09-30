@@ -37,8 +37,13 @@ export const IDE = {
   antigravity: {
     label: 'Antigravity',
     root: path.join(HOME, '.gemini'),
+    /** Skills also provide the /sep-* slash commands (workflows are retired on 2026-11-01) */
     skills: path.join(HOME, '.gemini', 'config', 'skills'),
-    workflows: path.join(HOME, '.gemini', 'config', 'global_workflows'),
+    /** Workflow folders written by older kit versions — cleaned up on install/uninstall */
+    legacyWorkflows: [
+      path.join(HOME, '.gemini', 'config', 'global_workflows'),
+      path.join(HOME, '.gemini', 'config', 'workflows'),
+    ],
     rules: path.join(HOME, '.gemini', 'config', 'rules'),
     mcp: path.join(HOME, '.gemini', 'config', 'mcp_config.json'),
     /** Older Antigravity builds read MCP from here — updated only if it already exists */
