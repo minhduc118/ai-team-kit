@@ -1,0 +1,36 @@
+# OpenSpec config — bối cảnh dự án cho agent khi viết artifact (/sep-brainstorm, /sep-verify-spec).
+# MCP tool sep_xem_change chèn `context` + `rules` vào hướng dẫn của các bước đó. Giữ ngắn gọn, đúng hiện trạng.
+
+project: MT-GRMS
+name: Multi-Tenant Grocery Retail Management System (SGMS)
+default_schema: feature
+
+context: |
+  Hệ thống quản lý chuỗi cửa hàng tạp hoá đa tenant (SEP490 – Group 84, FPT University).
+  Nghiệp vụ: sản phẩm, lô hàng + FEFO, tồn kho & kiểm kê, nhà cung cấp, đặt hàng (PO) & nhận hàng,
+  hao hụt nội bộ, bán hàng POS, báo cáo.
+
+  Backend (repo SEP490-Repo-Backend, solution SGMS.sln):
+  - .NET 8 LTS, ASP.NET Core Web API, Clean Architecture:
+    SGMS.Domain (entity, value object) → SGMS.Application (use case, DTO, FluentValidation)
+    → SGMS.Infrastructure (EF Core 8 + SQL Server, repository) → SGMS.API (controller, JWT auth, Swagger).
+  - Test: xUnit (SGMS.UnitTests, SGMS.IntegrationTests).
+
+  Frontend (repo SEP490-Repo-Frontend):
+  - Vite + React 19 + TypeScript, antd v6, TanStack Query, Zustand, Tailwind CSS v4.
+  - Lint: oxlint. Code theo feature: src/features/<feature>/{pages,components,lib,types}.
+
+rules:
+  proposal:
+    - Viết bằng tiếng Việt, thuật ngữ kỹ thuật giữ tiếng Anh.
+    - Không đi vào chi tiết kỹ thuật; nêu rõ in-scope / out-of-scope và tiêu chí thành công đo được.
+  specs:
+    - Dùng định dạng delta "## ADDED|MODIFIED|REMOVED Requirements" → "### Requirement: REQ-xx <tên>".
+    - Mỗi requirement dùng MUST/SHALL và có ít nhất một "#### Scenario:" GIVEN/WHEN/THEN, gồm cả edge case.
+    - Mọi truy vấn dữ liệu phải lọc theo tenant (TenantId) và kiểm tra quyền theo role.
+    - API REST dưới /api/<resource>, lỗi trả ProblemDetails (RFC 7807), phân trang page/pageSize.
+  design:
+    - Tiền tệ VND dùng decimal(18,2); thời gian lưu UTC, hiển thị theo Asia/Ho_Chi_Minh.
+    - Thay đổi DB phải có EF Core migration; không sửa migration đã merge.
+  tasks:
+    - Thứ tự DB → Domain/Application → API → Frontend → Test; mỗi task ≤ nửa ngày, tham chiếu REQ-xx.

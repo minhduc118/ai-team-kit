@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Architecture Decision Record",
+  "type": "object",
+  "required": ["id", "title", "date", "status", "author", "scope"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^ADR-\\d{4}$",
+      "description": "Unique ID, format: ADR-0001"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 120
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "accepted", "deprecated", "superseded"]
+    },
+    "superseded_by": {
+      "type": ["string", "null"],
+      "pattern": "^ADR-\\d{4}$"
+    },
+    "supersedes": {
+      "type": ["string", "null"],
+      "pattern": "^ADR-\\d{4}$"
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reviewers": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "scope": {
+      "type": "string",
+      "enum": ["backend", "frontend", "infra", "devops", "database", "security", "cross-cutting"]
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "impact": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "last_reviewed": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}

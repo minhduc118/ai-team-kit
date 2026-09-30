@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hướng Dẫn Sử Dụng - Team AI Knowledge Base</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --panel-bg: rgba(20, 27, 45, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #6366f1;
+      --primary-glow: rgba(99, 102, 241, 0.4);
+      --accent: #ec4899;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --font-main: 'Inter', sans-serif;
+      --font-heading: 'Outfit', sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-main);
+      line-height: 1.7;
+      overflow-x: hidden;
+      background-image:
+        radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.12) 0%, transparent 50%),
+        linear-gradient(to bottom, #0b0f19, #0d1326);
+      background-attachment: fixed;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-color);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary);
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--glass-border);
+      z-index: 1000;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .logo {
+      font-family: var(--font-heading);
+      font-weight: 800;
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, #a855f7, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+    }
+
+    .nav-links a:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 12rem 2rem 6rem;
+      text-align: center;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      padding: 0.5rem 1.25rem;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 50px;
+      color: #818cf8;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 2rem;
+      animation: float 3s ease-in-out infinite;
+      letter-spacing: 0.5px;
+    }
+
+    h1 {
+      font-family: var(--font-heading);
+      font-size: 4rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(to right, #ffffff, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Glass Panels (Cards) */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .glass-panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 3rem;
+      margin-bottom: 4rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--accent), var(--warning));
+      opacity: 0.8;
+      transition: opacity 0.3s ease;
+    }
+
+    .glass-panel:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    }
+
+    h2 {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      color: #fff;
+    }
+
+    h3 {
+      font-family: var(--font-heading);
+      font-size: 1.3rem;
+      color: #e2e8f0;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Code Blocks */
+    pre {
+      background: #09090b;
+      border: 1px solid #27272a;
+      border-radius: 12px;
+      padding: 1.5rem;
+      overflow-x: auto;
+      font-family: var(--font-code);
+      font-size: 0.9rem;
+      color: #e2e8f0;
+      margin: 1.5rem 0;
+      position: relative;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    code {
+      font-family: var(--font-code);
+      color: #38bdf8;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: white;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Workflow Steps */
+    .workflow-timeline {
+      position: relative;
+      padding-left: 2rem;
+      margin-top: 3rem;
+    }
+
+    .workflow-timeline::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--primary), var(--accent), var(--success));
+      border-radius: 2px;
+    }
+
+    .workflow-step {
+      position: relative;
+      margin-bottom: 3rem;
+    }
+
+    .workflow-step::before {
+      content: '';
+      position: absolute;
+      left: -2.35rem;
+      top: 0.25rem;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--bg-color);
+      border: 3px solid var(--primary);
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    .workflow-step:nth-child(2)::before { border-color: var(--accent); box-shadow: 0 0 10px rgba(236, 72, 153, 0.4); }
+    .workflow-step:nth-child(3)::before { border-color: var(--warning); box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
+    .workflow-step:nth-child(4)::before { border-color: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+
+    .workflow-content {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: transform 0.3s ease;
+    }
+
+    .workflow-content:hover {
+      transform: translateX(10px);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tool-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-family: var(--font-code);
+      font-size: 0.8rem;
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+      background: rgba(255,255,255,0.1);
+    }
+    .tool-badge.blue { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .tool-badge.pink { background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3); }
+    .tool-badge.green { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .tool-badge.orange { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    /* Tools Grid */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .tool-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tool-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-3px);
+    }
+
+    .tool-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .tool-name {
+      font-family: var(--font-code);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .tool-role {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+    }
+    
+    .role-laban { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+    .role-thamtu { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+    .role-quanly { background: rgba(236, 72, 153, 0.2); color: #f472b6; }
+    .role-kiemtoan { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .role-thanhtra { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .role-thuky { background: rgba(14, 165, 233, 0.2); color: #38bdf8; }
+
+    .tool-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      flex-grow: 1;
+    }
+
+    /* Animations */
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+      100% { transform: translateY(0px); }
+    }
+
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s cubic-bezier(0.165, 0.84, 0.44, 1), transform 0.7s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    footer {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--glass-border);
+      margin-top: 5rem;
+      font-family: var(--font-heading);
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+      </svg>
+      Team AI KB
+    </div>
+    <div class="nav-links">
+      <a href="#setup">Cài đặt</a>
+      <a href="#workflow">Quy trình (Spec-Driven)</a>
+      <a href="#tools">Bộ 16 MCP Tools</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-badge">Enterprise Spec-Driven Governance 🚀</div>
+    <h1>Trí Tuệ Tập Thể Cho Đội Ngũ AI</h1>
+    <p>Giải pháp lưu trữ Knowledge Base tập trung, giao tiếp qua giao thức MCP. Các AI Agents (Cursor, Windsurf) bị ràng buộc bởi các quy định nghiêm ngặt, tự động đọc hiểu dự án và sinh tài liệu chuẩn xác 100%.</p>
+  </header>
+
+  <main class="container">
+
+    <!-- SETUP SECTION -->
+    <section id="setup" class="glass-panel fade-in">
+      <h2>🛠️ Hướng Dẫn Cài Đặt</h2>
+      <p style="margin-bottom: 2rem;">Server hỗ trợ tự động chuyển đổi giữa <strong>Local (Stdio)</strong> và <strong>Remote (HTTP)</strong> dựa vào biến môi trường.</p>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <div>
+          <h3>Chế độ Local (Khuyên dùng cho IDE)</h3>
+          <p class="text-muted">Tốc độ siêu nhanh, đọc ghi file trực tiếp trên ổ cứng máy bạn.</p>
+          <pre><code>{
+  "mcpServers": {
+    "team-kb": {
+      "command": "node",
+      "args": ["/path/to/dist/index.js"]
+    }
+  }
+}</code></pre>
+        </div>
+        <div>
+          <h3>Chế độ Remote (Render/Cloud)</h3>
+          <p class="text-muted">Cần cấp biến môi trường <code style="color: #fff">GITHUB_TOKEN</code>, <code style="color: #fff">GITHUB_OWNER</code>, <code style="color: #fff">GITHUB_REPO</code> để tự động ghi file qua API.</p>
+          <pre><code>{
+  "mcpServers": {
+    "team-kb": {
+      "type": "streamable-http",
+      "serverURL": "https://your-app.onrender.com/mcp"
+    }
+  }
+}</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKFLOW SECTION -->
+    <section id="workflow" class="glass-panel fade-in">
+      <h2>🔄 Quy Trình Spec-Driven 5 Bước</h2>
+      <p>AI Agent khi kết nối vào dự án sẽ BẮT BUỘC phải tuân theo luồng công việc sau. Mọi hành động bộc phát của AI đều bị cấm.</p>
+
+      <div class="workflow-timeline">
+        <div class="workflow-step">
+          <div class="workflow-content">
+            <h3>Bước 1: Khởi Tạo & Nắm Ngữ Cảnh</h3>
+            <p style="margin-bottom: 1rem; color: var(--text-muted);">Ngay khi mở chat, AI phải xác định mình đang ở đâu và team đã làm gì.</p>
+            <div>
+              <span class="tool-badge blue">xem_tong_quan</span>
+              <span class="tool-badge blue">danh_sach_phien_gan_day</span>
+              <span class="tool-badge blue">xem_ngu_canh_du_an</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="workflow-step">
+          <div class="workflow-content">
+            <h3>Bước 2: Khám Phá & Đặc Tả (Specs)</h3>
+            <p style="margin-bottom: 1rem; color: var(--text-muted);">Không code vội! Trước tiên phải làm rõ vấn đề (Exploration) và viết yêu cầu chức năng (Spec) theo chuẩn Gherkin.</p>
+            <div>
+              <span class="tool-badge pink">xem_bieu_mau</span>
+              <span class="tool-badge pink">xem_khao_sat</span>
+              <span class="tool-badge pink">xem_dac_ta</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="workflow-step">
+          <div class="workflow-content">
+            <h3>Bước 3: Tham Khảo Pattern & Kiến Trúc</h3>
+            <p style="margin-bottom: 1rem; color: var(--text-muted);">Mọi dòng code viết ra phải tuân thủ nghiêm ngặt Coding Convention và Quyết định (ADR) của team.</p>
+            <div>
+              <span class="tool-badge orange">xem_mau_thiet_ke</span>
+              <span class="tool-badge orange">xem_quyet_dinh</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="workflow-step">
+          <div class="workflow-content">
+            <h3>Bước 4: Code & Thanh Tra Chất Lượng</h3>
+            <p style="margin-bottom: 1rem; color: var(--text-muted);">Sau khi hoàn thành tính năng, AI đóng vai QA chấm điểm 5 chiều (D1-D5) để đánh giá Blast Radius và mức độ hoàn thiện.</p>
+            <div>
+              <span class="tool-badge green">luu_danh_gia</span>
+              <span class="tool-badge green">xem_bai_hoc</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="workflow-step">
+          <div class="workflow-content">
+            <h3>Bước 5: Lưu Kết Quả & Đóng Phiên</h3>
+            <p style="margin-bottom: 1rem; color: var(--text-muted);">Sinh báo cáo tổng kết chi tiết để người sau vào đọc có thể nắm ngay tiến độ.</p>
+            <div>
+              <span class="tool-badge blue">luu_phien_lam_viec</span>
+              <span class="tool-badge blue">luu_bai_hoc</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOOLS SECTION -->
+    <section id="tools" class="glass-panel fade-in">
+      <h2>🔌 Bộ 16 Tiện Ích (Tools) Bằng Tiếng Việt</h2>
+      <p style="margin-bottom: 2rem;">Tất cả các tool được thiết kế với "Vai trò" riêng biệt, giúp AI hiểu được mục đích chính xác của từng công cụ thay vì chỉ đọc tên hàm.</p>
+
+      <div class="tools-grid">
+        <!-- Điều phối viên -->
+        <div class="tool-card" style="grid-column: 1 / -1; background: rgba(99, 102, 241, 0.05); border-color: rgba(99, 102, 241, 0.3);">
+          <div class="tool-header">
+            <span class="tool-name">phan_tich_ngu_canh_tu_dong</span>
+            <span class="tool-role" style="background: var(--primary); color: #fff;">🤖 Điều Phối Viên</span>
+          </div>
+          <p class="tool-desc">Đọc nội dung đoạn chat của bạn, tự động phân tích ý định (Intent Analyzer) và gọi ngầm các tool phù hợp. Bạn không cần phải nhớ lệnh!</p>
+        </div>
+
+        <!-- Quản lý quy trình -->
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">xem_bieu_mau</span>
+            <span class="tool-role role-quanly">Quản lý quy trình</span>
+          </div>
+          <p class="tool-desc">Lấy cấu trúc chuẩn (Template) từ `_global/templates/` trước khi AI tạo một tài liệu mới (Decision, Lesson, Spec, Pattern).</p>
+        </div>
+
+        <!-- Thanh tra QA -->
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">luu_danh_gia</span>
+            <span class="tool-role role-thanhtra">Thanh tra (QA)</span>
+          </div>
+          <p class="tool-desc">Ghi nhận đánh giá code theo ma trận 5 chiều (Completeness, Correctness, Coherence, Constraints, Blast Radius).</p>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">xem_tong_quan</span>
+            <span class="tool-role role-laban">La Bàn</span>
+          </div>
+          <p class="tool-desc">Lấy sơ đồ toàn bộ dự án từ START_HERE.md.</p>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">xem_ngu_canh_du_an</span>
+            <span class="tool-role role-laban">Nền tảng</span>
+          </div>
+          <p class="tool-desc">Đọc thông tin tổng quát, kiến trúc hệ thống của một Project cụ thể.</p>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">tim_kiem_kien_thuc</span>
+            <span class="tool-role role-thamtu">Thám tử</span>
+          </div>
+          <p class="tool-desc">Tìm kiếm Full-text trong toàn bộ Knowledge Base qua Regex và Caching.</p>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">xem_mau_thiet_ke</span>
+            <span class="tool-role role-kiemtoan">Kiểm soát viên</span>
+          </div>
+          <p class="tool-desc">Lấy các luật Coding Convention (PAT-xxx) bắt buộc phải tuân theo.</p>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">xem_quyet_dinh</span>
+            <span class="tool-role role-kiemtoan">Sử gia</span>
+          </div>
+          <p class="tool-desc">Đọc lại các quyết định thiết kế (ADR-xxxx) để biết tại sao code lại viết như vậy.</p>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">xem_bai_hoc</span>
+            <span class="tool-role role-kiemtoan">Cứu thương</span>
+          </div>
+          <p class="tool-desc">Tìm giải pháp cho bug đang gặp thông qua lịch sử lỗi (LL-xxx).</p>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">xem_khao_sat</span>
+            <span class="tool-role role-kiemtoan">Nhà phân tích</span>
+          </div>
+          <p class="tool-desc">Lấy tài liệu phân tích vấn đề (Exploration - EXP) để hiểu Scope và Non-goals.</p>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">xem_dac_ta</span>
+            <span class="tool-role role-kiemtoan">Kiểm toán viên</span>
+          </div>
+          <p class="tool-desc">Đọc tài liệu Đặc tả (Specs) yêu cầu GIVEN/WHEN/THEN để test TDD.</p>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">luu_phien_lam_viec</span>
+            <span class="tool-role role-thuky">Thư ký</span>
+          </div>
+          <p class="tool-desc">Tổng kết những gì đã làm, thay đổi file nào khi kết thúc phiên, lưu thành Markdown.</p>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">danh_sach_phien_gan_day</span>
+            <span class="tool-role role-thuky">Báo cáo viên</span>
+          </div>
+          <p class="tool-desc">Xem lịch sử các phiên làm việc gần đây của những team member khác.</p>
+        </div>
+        
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">luu_bai_hoc</span>
+            <span class="tool-role role-thuky">Giáo viên</span>
+          </div>
+          <p class="tool-desc">Lưu lại root-cause và giải pháp khi giải quyết xong một lỗi khó.</p>
+        </div>
+
+        <div class="tool-card">
+          <div class="tool-header">
+            <span class="tool-name">luu_tru_kien_thuc</span>
+            <span class="tool-role role-thamtu">Thủ thư</span>
+          </div>
+          <p class="tool-desc">Cất tài liệu lỗi thời vào thư mục archive để dọn dẹp hệ thống.</p>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Xây dựng bởi <strong>Antigravity AI Agent</strong> — Cập nhật lần cuối: Tháng 9/2026</p>
+  </footer>
+
+  <script>
+    // Copy Code Button functionality
+    document.querySelectorAll('pre').forEach((block) => {
+      const button = document.createElement('button');
+      button.className = 'copy-btn';
+      button.innerText = 'Copy';
+
+      button.addEventListener('click', () => {
+        const code = block.querySelector('code').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+          button.innerText = 'Copied!';
+          button.style.background = 'rgba(16, 185, 129, 0.3)';
+          button.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+          setTimeout(() => { 
+            button.innerText = 'Copy'; 
+            button.style.background = 'rgba(255, 255, 255, 0.1)';
+            button.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+          }, 2000);
+        });
+      });
+
+      block.appendChild(button);
+    });
+
+    // Intersection Observer for scroll animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    document.querySelectorAll('.fade-in').forEach((el) => {
+      observer.observe(el);
+    });
+  </script>
+</body>
+
+</html>

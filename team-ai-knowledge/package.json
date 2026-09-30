@@ -1,0 +1,32 @@
+{
+  "name": "team-ai-knowledge",
+  "version": "1.0.0",
+  "description": "Shared Knowledge Base for AI Agents & Developers",
+  "main": "scripts/validate.js",
+  "type": "module",
+  "bin": {
+    "sep": "scripts/sep.js"
+  },
+  "scripts": {
+    "validate": "node scripts/validate.js",
+    "build:index": "node scripts/build-index.js",
+    "stale": "node scripts/check-stale.js",
+    "setup:hooks": "node scripts/setup-hooks.js",
+    "sep": "node scripts/sep.js",
+    "sep:install": "node scripts/sep.js install",
+    "sep:uninstall": "node scripts/sep.js uninstall",
+    "sep:doctor": "node scripts/sep.js doctor",
+    "sep:validate": "node scripts/sep.js validate",
+    "test:sep": "node mcp-server/test-sep.js",
+    "test:kb": "node mcp-server/test-kb.js",
+    "test": "npm run test:sep && npm run test:kb"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "flexsearch": "^0.7.43",
+    "glob": "^10.4.5",
+    "gray-matter": "^4.0.3"
+  }
+}

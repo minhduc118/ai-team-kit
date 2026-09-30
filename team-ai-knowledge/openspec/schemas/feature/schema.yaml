@@ -1,0 +1,34 @@
+# Schema: feature — chức năng mới hoặc thay đổi hành vi có UI/API mới.
+# Artifact BẮT BUỘC của từng bước được định nghĩa trong code (không sửa ở đây):
+#   mcp-server/src/tools/sepWorkflow.ts (SCHEMAS) + sep490-frontend compliance.ts (TeamSpec).
+# File này chỉ chứa hướng dẫn viết từng artifact; sep_xem_change chèn vào hướng dẫn bước.
+
+name: feature
+description: Chức năng mới / thay đổi hành vi có UI hoặc API mới.
+when_to_use:
+  - Thêm màn hình, API, luồng nghiệp vụ mới
+  - Mở rộng hành vi của chức năng đang có
+required:
+  spec: [proposal.md]
+  brainstorm: [exploration.md, design-brief.md, specs.md]
+  verify-spec: [review/skeptic.md, tasks.md]
+  test: [test-report.md]
+
+artifacts:
+  proposal.md: >-
+    Vấn đề · Mục tiêu · Phạm vi (In scope / Out of scope) · Người dùng & role liên quan · Tiêu chí thành công đo được.
+  exploration.md: >-
+    Hiện trạng code liên quan (file/entity/endpoint) · Assumptions · Non-Goals · ≥2 phương án kèm ưu/nhược
+    · Phương án chọn + lý do · Rủi ro & cách giảm.
+  design-brief.md: >-
+    Luồng người dùng · Màn hình/component (antd) và trạng thái loading/empty/error · Endpoint + DTO
+    · Thay đổi DB (bảng, cột, index, migration) · Quy tắc nghiệp vụ & phân quyền.
+  specs.md: >-
+    Định dạng delta. Mỗi "### Requirement: REQ-xx" có MUST/SHALL và Scenario GIVEN/WHEN/THEN (case chính + edge case:
+    rỗng, trùng, đồng thời, vượt giới hạn, sai quyền, khác tenant). Cuối file: Acceptance checklist.
+  review/skeptic.md: >-
+    Bảng D1–D5 (1–5 điểm) · Vấn đề HIGH/MEDIUM/LOW kèm đề xuất · Kết luận Chấp nhận | Cần sửa.
+  tasks.md: >-
+    Checklist "- [ ] Tn — ... (REQ-xx)" nhóm theo DB → Backend → Frontend → Test.
+  test-report.md: >-
+    Frontmatter verdict: PASS|FAIL · Bảng Scenario/REQ → test case → kết quả · Lệnh test đã chạy + output tóm tắt · Lỗi tồn đọng.

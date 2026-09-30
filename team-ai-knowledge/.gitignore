@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build output
+mcp-server/dist/
+
+# Generated index
+.index/
+
+# Local MCP config (contains user-specific paths)
+.mcp.json
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.bak

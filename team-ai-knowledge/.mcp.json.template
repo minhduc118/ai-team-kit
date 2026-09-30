@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "team-knowledge-base-local": {
+      "command": "node",
+      "args": [
+        "<YOUR_KB_PATH>/mcp-server/dist/index.js"
+      ],
+      "env": {
+        "KB_ROOT": "<YOUR_KB_PATH>"
+      }
+    },
+    "team-knowledge-base-remote": {
+      "url": "https://<YOUR_RENDER_URL>/mcp",
+      "headers": {
+        "Authorization": "Bearer <YOUR_MCP_TOKEN>"
+      }
+    }
+  }
+}

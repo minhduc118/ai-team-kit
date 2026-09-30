@@ -1,0 +1,30 @@
+# Schema: bug-fix — sửa lỗi. Không cần design-brief.md.
+# Artifact BẮT BUỘC định nghĩa trong mcp-server/src/tools/sepWorkflow.ts (SCHEMAS) + TeamSpec compliance.ts.
+
+name: bug-fix
+description: Sửa lỗi — tái hiện, tìm root cause, sửa và chặn tái phát bằng regression test.
+when_to_use:
+  - Hành vi hiện tại sai so với spec / kỳ vọng
+  - Lỗi từ tester, user, log production
+required:
+  spec: [proposal.md]
+  brainstorm: [exploration.md, specs.md]
+  verify-spec: [review/skeptic.md, tasks.md]
+  test: [test-report.md]
+
+artifacts:
+  proposal.md: >-
+    Mô tả lỗi · Bước tái hiện · Kết quả thực tế vs mong đợi · Mức độ ảnh hưởng (ai, bao nhiêu, dữ liệu có hỏng không)
+    · Tiêu chí coi là đã sửa.
+  exploration.md: >-
+    Tái hiện được chưa (môi trường, dữ liệu) · Root cause (file/dòng, vì sao) · Các chỗ khác có cùng lỗi
+    · ≥2 cách sửa kèm ưu/nhược · Cách chọn · Có cần sửa dữ liệu đã hỏng không.
+  specs.md: >-
+    Định dạng delta (thường là MODIFIED Requirements): hành vi đúng + Scenario tái hiện lỗi (phải PASS sau khi sửa)
+    + regression scenario cho các case lân cận.
+  review/skeptic.md: >-
+    Soi: sửa đúng root cause hay chỉ triệu chứng · blast radius · dữ liệu cũ · có cần migration/backfill.
+  tasks.md: >-
+    Bắt đầu bằng task viết test tái hiện lỗi (đỏ) → sửa → test xanh → sửa dữ liệu nếu cần.
+  test-report.md: >-
+    verdict · Test tái hiện lỗi: trước FAIL / sau PASS · Regression suite đã chạy.

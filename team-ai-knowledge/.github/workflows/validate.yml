@@ -1,0 +1,43 @@
+name: Validate & Index Knowledge Base
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Frontmatter Schemas
+        run: npm run validate
+
+      - name: Build MCP server
+        run: npm ci --prefix mcp-server && npm run build --prefix mcp-server
+
+      - name: Test SEP workflow
+        run: npm run test:sep
+
+      - name: Test KB tools, auth, prompts
+        run: npm run test:kb
+
+      - name: Validate OpenSpec + SEP kit
+        run: npm run sep:validate
+
+      - name: Build Search Index
+        run: npm run build:index
+
+      - name: Check Stale Documents
+        run: npm run stale
