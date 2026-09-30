@@ -6,14 +6,78 @@
  */
 
 import matter from 'gray-matter';
-import type { DataProvider, ParsedMarkdown } from '../providers/dataProvider.js';
+import { safeRelPath, type DataProvider, type ParsedMarkdown } from '../providers/dataProvider.js';
+
+const KIND_PATHS = {
+  pattern: /^(_global|projects\/[^/]+)\/patterns\//,
+  decision: /^(_global|projects\/[^/]+)\/decisions\//,
+  lesson: /^(_global|projects\/[^/]+)\/lessons\//,
+  exploration: /^(openspec\/changes\/[^/]+\/exploration\.md|projects\/[^/]+\/explorations\/)/,
+  spec: /^(openspec\/specs\/|openspec\/changes\/[^/]+\/specs\.md)/,
+};
+const SESSION_PATH = /^projects\/([^/]+)\/sessions\/[^/]+\.md$/;
+const PROJECT_NAME = /^[\p{L}\p{N}][\p{L}\p{N}._ ()-]*$/u;
+
+export interface ToolHandlerOptions {
+  /** Written as `author` in generated docs (default: AI-Agent) */
+  author?: string;
+  /** Called after files are written/deleted (git commit in local mode). Paths are KB-relative. */
+  afterWrite?: (files: string[], message: string) => Promise<string | null>;
+}
+
+/** Rejects project names that could change the target folder (`../x`, `a/b`) */
+export function assertProjectName(projectName: string): string {
+  const name = String(projectName ?? '').trim();
+  if (!PROJECT_NAME.test(name) || name.includes('..')) {
+    throw new Error(`Tên dự án không hợp lệ: "${projectName}" — chỉ gồm chữ, số, dấu cách và . _ - ( )`);
+  }
+  return name;
+}
+
+/** Only markdown knowledge docs under _global/ or projects/ may be archived or restored */
+function assertKnowledgeDoc(p: string): string {
+  const rel = safeRelPath(p);
+  if (!/^(_global|projects\/[^/]+)\/.+\.md$/.test(rel)) {
+    throw new Error(`Chỉ lưu trữ/khôi phục được file .md trong _global/ hoặc projects/<dự án>/ (nhận: ${p})`);
+  }
+  return rel;
+}
 
 /**
  * Factory that creates all tool handler functions bound to a DataProvider.
  * @param provider - DataProvider instance (LocalProvider or GitHubProvider).
  * @returns Object containing all handler functions.
  */
-export function createToolHandlers(provider: DataProvider) {
+export function createToolHandlers(provider: DataProvider, options: ToolHandlerOptions = {}) {
+  const author = options.author?.trim() || 'AI-Agent';
+
+  /** Writes a generated markdown doc and commits it; returns the reply suffix */
+  async function saveDoc(
+    targetPath: string,
+    frontmatter: Record<string, unknown>,
+    body: string,
+    message: string,
+  ): Promise<{ path: string; git: string }> {
+    let finalPath = targetPath;
+    for (let n = 2; await provider.fileExists(finalPath); n++) {
+      finalPath = targetPath.replace(/\.md$/, `-${n}.md`);
+    }
+    await provider.writeFile(finalPath, matter.stringify(`\n${body.trim()}\n`, frontmatter), { message });
+    const git = await options.afterWrite?.([finalPath], message);
+    return { path: finalPath, git: git ? `\n🔀 ${git}` : '' };
+  }
+
+  /** Moves a doc (write new + delete old) and commits both paths */
+  async function moveDoc(from: string, to: string, doc: ParsedMarkdown, message: string): Promise<string> {
+    if (await provider.fileExists(to)) throw new Error(`Đích đã có file: ${to}`);
+    await provider.writeFile(to, matter.stringify(doc.content, doc.frontmatter), { message });
+    await provider.deleteFile(from, { message });
+    const git = await options.afterWrite?.([to, from], message);
+    return git ? `\n🔀 ${git}` : '';
+  }
+
+  const today = () => new Date().toISOString().split('T')[0];
+  const shortId = () => Math.floor(100 + Math.random() * 900);
 
   /**
    * Reads and parses a markdown file safely.
@@ -40,12 +104,15 @@ export function createToolHandlers(provider: DataProvider) {
    */
   async function searchMarkdownFiles(
     query: string,
-    projectName?: string
+    projectName?: string,
+    pathFilter?: RegExp
   ): Promise<Array<{ path: string; title: string; snippet: string }>> {
     const results: Array<{ path: string; title: string; snippet: string }> = [];
-    const searchDir = projectName ? `projects/${projectName}` : '';
+    const searchDir = projectName ? `projects/${assertProjectName(projectName)}` : '';
 
-    const files = await provider.listFiles(searchDir, '*.md');
+    const files = (await provider.listFiles(searchDir, '*.md'))
+      .map(f => f.replace(/\\/g, '/'))
+      .filter(f => !pathFilter || pathFilter.test(f));
     const queryLower = query.toLowerCase();
 
     for (const filePath of files) {
@@ -53,7 +120,7 @@ export function createToolHandlers(provider: DataProvider) {
       if (!doc) continue;
 
       const fullText = (
-        JSON.stringify(doc.frontmatter) + ' ' + doc.content
+        filePath + ' ' + JSON.stringify(doc.frontmatter) + ' ' + doc.content
       ).toLowerCase();
 
       if (fullText.includes(queryLower)) {
@@ -65,6 +132,16 @@ export function createToolHandlers(provider: DataProvider) {
     }
 
     return results;
+  }
+
+  /** Searches one document kind; falls back to the whole KB when the kind's folders have no match */
+  async function searchKind(query: string, kind: keyof typeof KIND_PATHS): Promise<string> {
+    const matches = await searchMarkdownFiles(query, undefined, KIND_PATHS[kind]);
+    if (matches.length) return JSON.stringify(matches, null, 2);
+    const loose = await searchMarkdownFiles(query);
+    return loose.length
+      ? `Không có ${kind} khớp '${query}' — kết quả tìm trong toàn KB:\n${JSON.stringify(loose, null, 2)}`
+      : `No matches found for '${query}'.`;
   }
 
   /**
@@ -83,7 +160,7 @@ export function createToolHandlers(provider: DataProvider) {
    * @returns Project context content.
    */
   async function handleXemNguCanhDuAn(projectName: string): Promise<string> {
-    const doc = await readMarkdown(`projects/${projectName}/context/overview.md`);
+    const doc = await readMarkdown(`projects/${assertProjectName(projectName)}/context/overview.md`);
     if (!doc) {
       return `Project '${projectName}' context not found.`;
     }
@@ -112,8 +189,7 @@ export function createToolHandlers(provider: DataProvider) {
    * @returns JSON stringified results.
    */
   async function handleXemMauThietKe(patternId: string): Promise<string> {
-    const matches = await searchMarkdownFiles(patternId);
-    return JSON.stringify(matches, null, 2);
+    return searchKind(patternId, 'pattern');
   }
 
   /**
@@ -122,8 +198,7 @@ export function createToolHandlers(provider: DataProvider) {
    * @returns JSON stringified results.
    */
   async function handleXemQuyetDinh(decisionId: string): Promise<string> {
-    const matches = await searchMarkdownFiles(decisionId);
-    return JSON.stringify(matches, null, 2);
+    return searchKind(decisionId, 'decision');
   }
 
   /**
@@ -132,22 +207,45 @@ export function createToolHandlers(provider: DataProvider) {
    * @returns JSON stringified results.
    */
   async function handleXemBaiHoc(lessonId: string): Promise<string> {
-    const matches = await searchMarkdownFiles(lessonId);
-    return JSON.stringify(matches, null, 2);
+    return searchKind(lessonId, 'lesson');
   }
 
   /**
-   * Handles danh_sach_phien_gan_day — lists recent session summaries.
-   * @param _days - Number of recent days (currently searches all).
-   * @param _projectName - Optional project filter.
-   * @returns JSON stringified results.
+   * Handles danh_sach_phien_gan_day — lists session summaries from the last N days.
+   * @param days - Number of recent days (default 3). With no session in range, returns the 5 latest.
+   * @param projectName - Optional project filter.
+   * @returns JSON stringified results, newest first.
    */
   async function handleDanhSachPhienGanDay(
-    _days?: number,
-    _projectName?: string
+    days = 3,
+    projectName?: string
   ): Promise<string> {
-    const matches = await searchMarkdownFiles('Session Summary');
-    return JSON.stringify(matches, null, 2);
+    const files = (await provider.listFiles(projectName ? `projects/${assertProjectName(projectName)}` : 'projects', '*.md'))
+      .map(f => f.replace(/\\/g, '/'))
+      .filter(f => SESSION_PATH.test(f));
+
+    const sessions: Array<{ path: string; project: string; date: string; title: string; snippet: string }> = [];
+    for (const filePath of files) {
+      const doc = await readMarkdown(filePath);
+      if (!doc) continue;
+      const fileName = filePath.split('/').pop()!;
+      const date = String(doc.frontmatter.date ?? fileName.slice(0, 10)).slice(0, 10);
+      const title = doc.content.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? fileName.replace(/\.md$/, '');
+      sessions.push({
+        path: filePath,
+        project: filePath.match(SESSION_PATH)![1],
+        date,
+        title,
+        snippet: doc.content.replace(/^#.*$/gm, '').trim().slice(0, 200).replace(/\n/g, ' '),
+      });
+    }
+    sessions.sort((a, b) => b.date.localeCompare(a.date));
+
+    const since = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+    const recent = sessions.filter(s => s.date >= since);
+    if (recent.length) return JSON.stringify(recent, null, 2);
+    if (!sessions.length) return `Chưa có phiên làm việc nào${projectName ? ` cho ${projectName}` : ''}.`;
+    return `Không có phiên nào trong ${days} ngày gần đây — 5 phiên mới nhất:\n${JSON.stringify(sessions.slice(0, 5), null, 2)}`;
   }
 
   function toSlug(str: string): string {
@@ -172,31 +270,26 @@ export function createToolHandlers(provider: DataProvider) {
     filesChanged?: string[];
     summary: string;
   }): Promise<string> {
-    const { projectName, title, goals, filesChanged, summary } = params;
+    const { title, goals, filesChanged, summary } = params;
+    const projectName = assertProjectName(params.projectName);
 
-    const date = new Date().toISOString().split('T')[0];
-    const fileName = `${date}-${toSlug(title)}.md`;
-    const targetPath = `projects/${projectName}/sessions/${fileName}`;
-
-    const content = [
-      '---',
-      `id: SES-${date}-${Math.floor(100 + Math.random() * 900)}`,
-      `date: "${date}"`,
-      `author: AI-Agent`,
-      `project: ${projectName}`,
-      `goals: ${JSON.stringify(goals)}`,
-      `status: completed`,
-      `files_changed: ${JSON.stringify(filesChanged || [])}`,
-      `tags: [session, summary]`,
-      '---',
-      '',
-      `# Session Summary: ${title}`,
-      '',
-      summary,
-    ].join('\n');
-
-    await provider.writeFile(targetPath, content);
-    return `✅ Session summary successfully saved to: ${targetPath}`;
+    const date = today();
+    const saved = await saveDoc(
+      `projects/${projectName}/sessions/${date}-${toSlug(title) || 'session'}.md`,
+      {
+        id: `SES-${date}-${shortId()}`,
+        date,
+        author,
+        project: projectName,
+        goals,
+        status: 'completed',
+        files_changed: filesChanged ?? [],
+        tags: ['session', 'summary'],
+      },
+      `# Session Summary: ${title}\n\n${summary}`,
+      `kb(${projectName}): session ${title}`,
+    );
+    return `✅ Session summary successfully saved to: ${saved.path}${saved.git}`;
   }
 
   /**
@@ -214,34 +307,24 @@ export function createToolHandlers(provider: DataProvider) {
   }): Promise<string> {
     const { title, scope, severity, resolution, problem, solution } = params;
 
-    const date = new Date().toISOString().split('T')[0];
-    const lessonId = `LL-${date}-${Math.floor(100 + Math.random() * 900)}`;
-    const fileName = `${lessonId}-${toSlug(title)}.md`;
-    const targetPath = `_global/lessons/${fileName}`;
-
-    const content = [
-      '---',
-      `id: ${lessonId}`,
-      `title: "${title}"`,
-      `date: "${date}"`,
-      `author: AI-Agent`,
-      `scope: ${scope}`,
-      `severity: ${severity}`,
-      `resolution: ${resolution}`,
-      `tags: [lesson, agent-generated]`,
-      '---',
-      '',
-      `# ${lessonId}: ${title}`,
-      '',
-      '## Problem',
-      problem,
-      '',
-      '## Solution',
-      solution,
-    ].join('\n');
-
-    await provider.writeFile(targetPath, content);
-    return `✅ Lesson learned successfully saved to: ${targetPath}`;
+    const date = today();
+    const lessonId = `LL-${date}-${shortId()}`;
+    const saved = await saveDoc(
+      `_global/lessons/${lessonId}-${toSlug(title) || 'lesson'}.md`,
+      {
+        id: lessonId,
+        title,
+        date,
+        author,
+        scope,
+        severity,
+        resolution,
+        tags: ['lesson', 'agent-generated'],
+      },
+      `# ${lessonId}: ${title}\n\n## Problem\n${problem}\n\n## Solution\n${solution}`,
+      `kb: lesson ${lessonId} ${title}`,
+    );
+    return `✅ Lesson learned successfully saved to: ${saved.path}${saved.git}`;
   }
 
   /**
@@ -278,21 +361,19 @@ export function createToolHandlers(provider: DataProvider) {
    * @returns Success message.
    */
   async function handleLuuTruKienThuc(path: string, reason?: string): Promise<string> {
-    const doc = await readMarkdown(path);
-    if (!doc) return `Error: File not found at ${path}`;
+    const rel = assertKnowledgeDoc(path);
+    const doc = await readMarkdown(rel);
+    if (!doc) return `Error: File not found at ${rel}`;
 
     doc.frontmatter.status = 'archived';
     doc.frontmatter.superseded = true;
     if (reason) doc.frontmatter.archive_reason = reason;
 
-    const newPath = getArchivePath(path);
-    if (newPath === path) return `Error: Could not determine archive path for ${path}`;
+    const newPath = getArchivePath(rel);
+    if (newPath === rel) return `Error: ${rel} đã nằm trong archive.`;
 
-    const content = matter.stringify(doc.content, doc.frontmatter);
-    await provider.writeFile(newPath, content);
-    await provider.deleteFile(path);
-
-    return `✅ Successfully archived to: ${newPath}`;
+    const git = await moveDoc(rel, newPath, doc, `kb: archive ${rel}`);
+    return `✅ Successfully archived to: ${newPath}${git}`;
   }
 
   /**
@@ -301,21 +382,19 @@ export function createToolHandlers(provider: DataProvider) {
    * @returns Success message.
    */
   async function handlePhucHoiKienThuc(path: string): Promise<string> {
-    const doc = await readMarkdown(path);
-    if (!doc) return `Error: File not found at ${path}`;
+    const rel = assertKnowledgeDoc(path);
+    const doc = await readMarkdown(rel);
+    if (!doc) return `Error: File not found at ${rel}`;
 
     doc.frontmatter.status = 'active';
     delete doc.frontmatter.superseded;
     delete doc.frontmatter.archive_reason;
 
-    const newPath = getRestorePath(path);
-    if (newPath === path) return `Error: File does not appear to be in an archive path.`;
+    const newPath = getRestorePath(rel);
+    if (newPath === rel) return `Error: File does not appear to be in an archive path.`;
 
-    const content = matter.stringify(doc.content, doc.frontmatter);
-    await provider.writeFile(newPath, content);
-    await provider.deleteFile(path);
-
-    return `✅ Successfully restored to: ${newPath}`;
+    const git = await moveDoc(rel, newPath, doc, `kb: restore ${newPath}`);
+    return `✅ Successfully restored to: ${newPath}${git}`;
   }
 
   /**
@@ -327,7 +406,10 @@ export function createToolHandlers(provider: DataProvider) {
     const safeType = toSlug(type);
     const doc = await readMarkdown(`_global/templates/${safeType}.md`);
     if (!doc) {
-      return `Template '${safeType}' not found. Available templates might be: pattern, decision, lesson, session.`;
+      const available = (await provider.listFiles('_global/templates', '*.md'))
+        .map(f => f.split('/').pop()!.replace(/\.md$/, ''))
+        .sort();
+      return `Template '${safeType}' not found. Available templates: ${available.join(', ')}.`;
     }
     return `# Template: ${type}\n\n${doc.content}`;
   }
@@ -337,8 +419,7 @@ export function createToolHandlers(provider: DataProvider) {
    * @returns JSON stringified results.
    */
   async function handleXemKhaoSat(explorationId: string): Promise<string> {
-    const matches = await searchMarkdownFiles(explorationId);
-    return JSON.stringify(matches, null, 2);
+    return searchKind(explorationId, 'exploration');
   }
 
   /**
@@ -347,8 +428,7 @@ export function createToolHandlers(provider: DataProvider) {
    * @returns JSON stringified results.
    */
   async function handleXemDacTa(specId: string): Promise<string> {
-    const matches = await searchMarkdownFiles(specId);
-    return JSON.stringify(matches, null, 2);
+    return searchKind(specId, 'spec');
   }
 
   /**
@@ -366,38 +446,38 @@ export function createToolHandlers(provider: DataProvider) {
     blastRadius: string;
     summary: string;
   }): Promise<string> {
-    const { projectName, title, completeness, correctness, coherence, constraints, blastRadius, summary } = params;
+    const { title, completeness, correctness, coherence, constraints, blastRadius, summary } = params;
+    const projectName = assertProjectName(params.projectName);
+    const cell = (v: string) => String(v).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 
-    const date = new Date().toISOString().split('T')[0];
-    const fileName = `${date}-${toSlug(title)}.md`;
-    const targetPath = `projects/${projectName}/reviews/${fileName}`;
-
-    const content = [
-      '---',
-      `id: REV-${date}-${Math.floor(100 + Math.random() * 900)}`,
-      `date: "${date}"`,
-      `author: AI-Agent`,
-      `project: ${projectName}`,
-      `tags: [review, verification]`,
-      '---',
-      '',
-      `# Verification Report: ${title}`,
-      '',
-      '## 5-Dimension Assessment',
-      `| Dimension | Status |`,
-      `|-----------|--------|`,
-      `| D1: Completeness | ${completeness} |`,
-      `| D2: Correctness | ${correctness} |`,
-      `| D3: Coherence | ${coherence} |`,
-      `| D4: Constraints | ${constraints} |`,
-      `| D5: Blast Radius | ${blastRadius} |`,
-      '',
-      '## Summary',
-      summary,
-    ].join('\n');
-
-    await provider.writeFile(targetPath, content);
-    return `✅ Verification report successfully saved to: ${targetPath}`;
+    const date = today();
+    const saved = await saveDoc(
+      `projects/${projectName}/reviews/${date}-${toSlug(title) || 'review'}.md`,
+      {
+        id: `REV-${date}-${shortId()}`,
+        date,
+        author,
+        project: projectName,
+        tags: ['review', 'verification'],
+      },
+      [
+        `# Verification Report: ${title}`,
+        '',
+        '## 5-Dimension Assessment',
+        '| Dimension | Status |',
+        '|-----------|--------|',
+        `| D1: Completeness | ${cell(completeness)} |`,
+        `| D2: Correctness | ${cell(correctness)} |`,
+        `| D3: Coherence | ${cell(coherence)} |`,
+        `| D4: Constraints | ${cell(constraints)} |`,
+        `| D5: Blast Radius | ${cell(blastRadius)} |`,
+        '',
+        '## Summary',
+        summary,
+      ].join('\n'),
+      `kb(${projectName}): review ${title}`,
+    );
+    return `✅ Verification report successfully saved to: ${saved.path}${saved.git}`;
   }
 
   return {

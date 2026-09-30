@@ -5,7 +5,9 @@
  * Includes in-memory cache to minimize API calls.
  */
 
-import type { DataProvider } from './dataProvider.js';
+import { safeRelPath, type DataProvider, type WriteMeta } from './dataProvider.js';
+
+const encodePath = (p: string) => p.split('/').map(encodeURIComponent).join('/');
 
 /** Cache entry with TTL tracking */
 interface CacheEntry {
@@ -141,13 +143,19 @@ export class GitHubProvider implements DataProvider {
    * @returns File content or null if not found.
    */
   async readFile(relativePath: string): Promise<string | null> {
-    const normalized = relativePath.replace(/\\/g, '/');
+    let normalized: string;
+    try {
+      normalized = safeRelPath(relativePath);
+    } catch (error: any) {
+      console.error(`[GitHubProvider.readFile] ${error.message}`);
+      return null;
+    }
     const cached = this.getCached(`file:${normalized}`);
     if (cached !== null) return cached;
 
     try {
       const data: GitHubContentResponse | null = await this.githubFetch(
-        `/contents/${normalized}?ref=${this.branch}`
+        `/contents/${encodePath(normalized)}?ref=${this.branch}`
       );
 
       if (!data || data.type !== 'file' || !data.content) return null;
@@ -166,38 +174,43 @@ export class GitHubProvider implements DataProvider {
    * @param relativePath - Path relative to repo root.
    * @param content - Content to write.
    */
-  async writeFile(relativePath: string, content: string): Promise<void> {
-    const normalized = relativePath.replace(/\\/g, '/');
-
-    // Check if file exists to get its SHA (needed for update)
-    let sha: string | undefined;
-    try {
-      const existing: GitHubContentResponse | null = await this.githubFetch(
-        `/contents/${normalized}?ref=${this.branch}`
-      );
-      if (existing) sha = existing.sha;
-    } catch {
-      // File doesn't exist — will create
-    }
+  async writeFile(relativePath: string, content: string, meta: WriteMeta = {}): Promise<void> {
+    const normalized = safeRelPath(relativePath);
+    if (!normalized) throw new Error('Thiếu đường dẫn file');
 
     const body: Record<string, any> = {
-      message: `chore: auto-save ${normalized.split('/').pop()}`,
+      message: meta.message ?? `chore: auto-save ${normalized.split('/').pop()}`,
       content: Buffer.from(content, 'utf8').toString('base64'),
       branch: this.branch,
     };
-    if (sha) body.sha = sha;
+    if (meta.author) {
+      body.author = meta.author;
+      body.committer = meta.author;
+    }
 
-    await this.githubFetch(`/contents/${normalized}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    // A concurrent write changes the file SHA → GitHub answers 409/422; refetch the SHA and retry once
+    for (let attempt = 0; ; attempt++) {
+      const existing: GitHubContentResponse | null = await this.githubFetch(
+        `/contents/${encodePath(normalized)}?ref=${this.branch}`
+      ).catch(() => null);
+      if (existing?.sha) body.sha = existing.sha;
+      else delete body.sha;
 
-    // Update cache with new content
+      try {
+        await this.githubFetch(`/contents/${encodePath(normalized)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        break;
+      } catch (error: any) {
+        if (attempt === 0 && /GitHub API error (409|422)/.test(error.message)) continue;
+        throw error;
+      }
+    }
+
     this.setCache(`file:${normalized}`, content);
-    // Invalidate parent directory cache
-    const parentDir = normalized.substring(0, normalized.lastIndexOf('/'));
-    this.invalidateCache(`tree:`);
+    this.invalidateCache('tree:');
   }
 
   /**
@@ -207,7 +220,7 @@ export class GitHubProvider implements DataProvider {
    * @returns Array of relative file paths.
    */
   async listFiles(dirPath: string, pattern?: string): Promise<string[]> {
-    const normalized = dirPath.replace(/\\/g, '/').replace(/\/$/, '');
+    const normalized = safeRelPath(dirPath);
     const allFiles = await this.getFileTree();
 
     const ext = pattern?.replace('*', '') || '';
@@ -226,9 +239,14 @@ export class GitHubProvider implements DataProvider {
    * @returns True if exists.
    */
   async fileExists(relativePath: string): Promise<boolean> {
-    const normalized = relativePath.replace(/\\/g, '/');
+    let normalized: string;
+    try {
+      normalized = safeRelPath(relativePath);
+    } catch {
+      return false;
+    }
     const allFiles = await this.getFileTree();
-    return allFiles.includes(normalized);
+    return allFiles.includes(normalized) || allFiles.some(f => f.startsWith(`${normalized}/`));
   }
 
   /**
@@ -284,22 +302,26 @@ export class GitHubProvider implements DataProvider {
    * Deletes a file from GitHub repository.
    * @param relativePath - Path relative to repo root.
    */
-  async deleteFile(relativePath: string): Promise<void> {
-    const normalized = relativePath.replace(/\\/g, '/');
+  async deleteFile(relativePath: string, meta: WriteMeta = {}): Promise<void> {
+    const normalized = safeRelPath(relativePath);
 
     try {
       const existing: GitHubContentResponse | null = await this.githubFetch(
-        `/contents/${normalized}?ref=${this.branch}`
+        `/contents/${encodePath(normalized)}?ref=${this.branch}`
       );
       if (!existing || !existing.sha) return;
 
-      const body = {
-        message: `chore: auto-delete ${normalized.split('/').pop()}`,
+      const body: Record<string, any> = {
+        message: meta.message ?? `chore: auto-delete ${normalized.split('/').pop()}`,
         sha: existing.sha,
         branch: this.branch,
       };
+      if (meta.author) {
+        body.author = meta.author;
+        body.committer = meta.author;
+      }
 
-      await this.githubFetch(`/contents/${normalized}`, {
+      await this.githubFetch(`/contents/${encodePath(normalized)}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

@@ -2,7 +2,7 @@
 id: SES-2026-09-21-843
 date: "2026-09-21"
 author: AI-Agent
-project: Multi-Tenant Grocery Retail Management System (MT-GRMS)
+project: MT-GRMS
 goals: ["Đọc và phân tích toàn diện 2 tài liệu đồ án: Report 1 (Project Introduction) và Report 2 (Project Management Plan).","Khảo sát và đặc tả chi tiết yêu cầu bài toán (bối cảnh, pain points, 6 khoảng trống GAP-01 đến GAP-06, 26 tính năng FE-01 đến FE-26) lưu vào file markdown tại thư mục Document.","Thiết kế Sơ đồ ngữ cảnh (Context Diagram / DFD Level 0) cho hệ thống MT-GRMS với đầy đủ các Actor và luồng dữ liệu (Data Flows).","Chuẩn hóa danh sách Actor tiếng Anh và rà soát bối cảnh nghiệp vụ thực tế (mô hình Cô Ngân, FEFO, thanh toán VietQR động, Mini Web Store, AI Recommender).","Làm rõ tương tác Inbound/Outbound giữa các Actor và hệ thống phục vụ vẽ sơ đồ trực quan."]
 status: completed
 files_changed: ["d:\\FPT_University\\Final\\Grade\\new\\Document\\Yeu_Cau_Bai_Toan_MT_GRMS.md","d:\\FPT_University\\Final\\Grade\\new\\Document\\Context_Diagram_MT_GRMS.md"]

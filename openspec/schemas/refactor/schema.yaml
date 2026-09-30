@@ -1,0 +1,29 @@
+# Schema: refactor — cải tổ code, KHÔNG đổi hành vi. Không cần design-brief.md.
+# Artifact BẮT BUỘC định nghĩa trong mcp-server/src/tools/sepWorkflow.ts (SCHEMAS) + TeamSpec compliance.ts.
+
+name: refactor
+description: Cải tổ cấu trúc code / hiệu năng / nợ kỹ thuật mà hành vi bên ngoài giữ nguyên.
+when_to_use:
+  - Tách/gộp module, đổi kiến trúc nội bộ, nâng cấp thư viện
+  - Tối ưu hiệu năng không đổi kết quả
+required:
+  spec: [proposal.md]
+  brainstorm: [exploration.md, specs.md]
+  verify-spec: [review/skeptic.md, tasks.md]
+  test: [test-report.md]
+
+artifacts:
+  proposal.md: >-
+    Vấn đề của code hiện tại (đo được: độ phức tạp, thời gian, lỗi lặp lại) · Mục tiêu · Phạm vi · Tiêu chí thành công.
+  exploration.md: >-
+    Bản đồ code bị ảnh hưởng (caller/callee) · Độ phủ test hiện có · ≥2 hướng refactor · Kế hoạch từng bước nhỏ,
+    mỗi bước build + test xanh · Rủi ro.
+  specs.md: >-
+    Định dạng delta. Liệt kê các bất biến (invariant) phải giữ nguyên dưới dạng Requirement + Scenario
+    (API contract, kết quả tính toán, hiệu năng tối thiểu). Thường không có ADDED.
+  review/skeptic.md: >-
+    Soi: hành vi có thật sự giữ nguyên · chỗ thiếu test · breaking change với caller · kế hoạch rollback.
+  tasks.md: >-
+    Viết/bổ sung characterization test trước → refactor từng bước nhỏ → xoá code cũ.
+  test-report.md: >-
+    verdict · Toàn bộ test cũ vẫn PASS · So sánh trước/sau (hiệu năng, độ phức tạp) nếu là mục tiêu.

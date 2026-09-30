@@ -12,15 +12,25 @@ team-ai-knowledge/
 ├── _global/                    ← Áp dụng cho TẤT CẢ projects
 │   ├── patterns/               ← Coding conventions
 │   ├── decisions/              ← Quyết định cấp team
-│   └── lessons/                ← Bài học chung
+│   ├── lessons/                ← Bài học chung
+│   └── templates/              ← Mẫu: decision, lesson, pattern, session, review, exploration, spec
 │
-└── projects/                   ← Riêng từng project
-    └── {project-name}/
-        ├── context/            ← Thông tin nền dự án
-        ├── decisions/          ← ADR riêng project
-        ├── lessons/            ← Lessons riêng project
-        ├── sessions/           ← Lịch sử phiên làm việc
-        └── archive/            ← Docs đã superseded
+├── projects/                   ← Riêng từng project
+│   └── {project-name}/
+│       ├── context/overview.md ← Thông tin nền dự án (tool xem_ngu_canh_du_an)
+│       ├── decisions/          ← ADR riêng project
+│       ├── lessons/            ← Lessons riêng project
+│       ├── sessions/           ← Lịch sử phiên làm việc
+│       ├── reviews/            ← Báo cáo đánh giá D1–D5
+│       └── archive/            ← Docs đã superseded
+│
+├── openspec/                   ← Quy trình SEP
+│   ├── config.yaml             ← Bối cảnh dự án cho agent
+│   ├── schemas/                ← feature / bug-fix / refactor
+│   ├── changes/<change>/       ← Artifact 6 bước (chỉ ghi qua tool sep_*)
+│   └── specs/<capability>/     ← Spec gốc, merge khi /sep-archive
+│
+└── sep-kit/                    ← skills/, agents/ (persona), rules/, hooks/
 ```
 
 ---
@@ -29,10 +39,7 @@ team-ai-knowledge/
 
 | File | Scope | Mô tả ngắn |
 |------|-------|------------|
-| [error-handling.md](./_global/patterns/error-handling.md) | cross-cutting | Result pattern, không throw |
-| [api-response.md](./_global/patterns/api-response.md) | backend | Format chuẩn response API |
-| [naming-conventions.md](./_global/patterns/naming-conventions.md) | cross-cutting | Quy ước đặt tên |
-| [git-workflow.md](./_global/patterns/git-workflow.md) | devops | Branch, commit, PR |
+| [PAT-001-error-handling.md](./_global/patterns/PAT-001-error-handling.md) | global | Standard Error Handling Pattern |
 
 ---
 
@@ -40,7 +47,7 @@ team-ai-knowledge/
 
 | ID | Status | Scope | Title |
 |----|--------|-------|-------|
-| [ADR-0001](./_global/decisions/ADR-0001-knowledge-base-structure.md) | accepted | cross-cutting | Cấu trúc Knowledge Base dùng chung |
+| [ADR-0001](./_global/decisions/ADR-0001-mcp-architecture.md) | accepted | cross-cutting | Hybrid MCP Knowledge Base Architecture |
 
 ---
 
@@ -48,6 +55,8 @@ team-ai-knowledge/
 
 | Project | Status | Mô tả |
 |---------|--------|-------|
+| [MT-GRMS](./projects/MT-GRMS/) | active | Đồ án SEP490 — quản lý chuỗi tạp hoá đa tenant |
+| [document-workspace-hub](./projects/document-workspace-hub/) | active | Workspace tài liệu |
 | [team-ai-knowledge](./projects/team-ai-knowledge/) | active | Knowledge về bản thân hệ thống KB |
 
 ---
@@ -57,8 +66,8 @@ team-ai-knowledge/
 ### Tôi là dev mới, cần hiểu tổng quan
 1. Đọc file này
 2. Đọc `_global/patterns/` — biết team code kiểu gì
-3. Đọc `projects/{project-của-tôi}/context/project-overview.md`
-4. Đọc `projects/{project-của-tôi}/context/tech-stack.md`
+3. Đọc `projects/{project-của-tôi}/context/overview.md`
+4. Đọc `openspec/config.yaml` — stack và rule kỹ thuật
 
 ### Tôi cần biết team đã quyết định gì về X
 1. Tìm trong `_global/decisions/` — quyết định cấp team

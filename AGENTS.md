@@ -45,6 +45,23 @@ Bước 2: Gọi danh_sach_phien_gan_day()
 
 ---
 
+## 📋 QUY TRÌNH SEP: 6 lệnh cho 6 bước
+
+Cài đặt: `npm run sep -- install --user=<github>` (Cursor / Claude Code / Antigravity — xem `sep-kit/README.md`).
+
+`/sep-spec` → `/sep-brainstorm` → `/sep-verify-spec` → `/sep-apply` → `/sep-test` → `/sep-archive` (`/sep-status` xem tiến độ)
+
+- Khi user yêu cầu làm **chức năng mới** mà chưa có change: đề nghị dùng `/sep-spec <mô tả>` thay vì code ngay.
+- Change nằm ở `openspec/changes/<tên>/`. **Chỉ ghi artifact qua tool `sep_*`** — không sửa file tay.
+- **Schema** (`sep_tao_change` tham số `schema`): `feature` (mặc định), `bug-fix`, `refactor` — hai loại sau không cần `design-brief.md`. Bối cảnh dự án: `openspec/config.yaml`.
+- **Cổng duyệt:** cuối mỗi bước trình bày kết quả và hỏi user Approve / Reject. Chỉ gọi `sep_duyet_buoc` **sau khi user trả lời** — không tự duyệt thay user. Reject → sửa theo lý do rồi hỏi lại.
+- **Review đa persona** ở verify-spec: `sep_xem_persona` lấy checklist của skeptic (bắt buộc), guardian, advocate, codebase.
+- Chỉ code sau khi `sep_chuyen_trang_thai` → `apply` thành công. Skip bước = BLOCKED trên TeamSpec.
+- `specs.md` viết dạng delta (`## ADDED|MODIFIED|REMOVED Requirements` + `### Requirement: <tên>`) để archive merge vào `openspec/specs/<capability>/spec.md`.
+- Tra cứu: `sep_xem_change` (bước tiếp theo), `sep_danh_sach_change` (danh sách), `sep_chon_change` (đổi change đang làm — các tool khác bỏ trống `tenChange` sẽ dùng change này).
+
+---
+
 ## 📋 QUY TRÌNH 2: Trong khi làm việc (Spec-Driven)
 
 ### 2.1. Trước khi viết code mới

@@ -10,10 +10,12 @@
 ```
 team-ai-knowledge/
 ├── _global/          ← Knowledge áp dụng cho TẤT CẢ projects
-└── projects/         ← Knowledge riêng từng project
-    ├── project-alpha/
-    ├── project-beta/
-    └── ...
+├── projects/         ← Knowledge riêng từng project
+│   ├── MT-GRMS/
+│   ├── document-workspace-hub/
+│   └── team-ai-knowledge/
+├── openspec/         ← Quy trình SEP: changes/ (đang làm), specs/ (spec gốc), schemas/, config.yaml
+└── sep-kit/          ← Skills /sep-*, persona review, rules, hooks — cài bằng `npm run sep -- install`
 ```
 
 ---
@@ -53,24 +55,30 @@ Khi user nói "tổng kết", "summarize", hoặc kết thúc → Gọi `save_se
 
 | Project | Đường dẫn | Mô tả |
 |---------|-----------|-------|
+| MT-GRMS | [`projects/MT-GRMS/`](./projects/MT-GRMS/) | Đồ án SEP490 — hệ thống quản lý chuỗi tạp hoá đa tenant ([tổng quan](./projects/MT-GRMS/context/overview.md)) |
+| document-workspace-hub | [`projects/document-workspace-hub/`](./projects/document-workspace-hub/) | Workspace tài liệu |
 | team-ai-knowledge | [`projects/team-ai-knowledge/`](./projects/team-ai-knowledge/) | Knowledge về bản thân hệ thống KB |
 
 > Thêm project mới vào đây sau khi tạo.
 
 ---
 
+## 🔁 Quy trình SEP (làm chức năng)
+
+6 lệnh cho 6 bước: `/sep-spec` → `/sep-brainstorm` → `/sep-verify-spec` → `/sep-apply` → `/sep-test` → `/sep-archive`
+(`/sep-status` xem tiến độ). Mỗi bước kết thúc bằng Approve/Reject. Chi tiết: [`sep-kit/README.md`](./sep-kit/README.md).
+
+---
+
 ## 📋 Patterns hay dùng nhất
 
-- [Error Handling](./_global/patterns/error-handling.md) — Cách xử lý lỗi của team
-- [API Response Format](./_global/patterns/api-response.md) — Chuẩn response API
-- [Naming Conventions](./_global/patterns/naming-conventions.md) — Quy ước đặt tên
-- [Git Workflow](./_global/patterns/git-workflow.md) — Quy trình git của team
+- [PAT-001: Error Handling](./_global/patterns/PAT-001-error-handling.md) — Cách xử lý lỗi của team
 
 ---
 
 ## 📖 Decisions quan trọng nhất
 
-- [ADR-0001: Cấu trúc Knowledge Base](./_global/decisions/ADR-0001-knowledge-base-structure.md)
+- [ADR-0001: Hybrid MCP Knowledge Base Architecture](./_global/decisions/ADR-0001-mcp-architecture.md)
 
 ---
 
@@ -83,4 +91,4 @@ Khi user nói "tổng kết", "summarize", hoặc kết thúc → Gọi `save_se
 
 ---
 
-*Cập nhật lần cuối: 2026-09-14 | Maintainer: Team Lead*
+*Cập nhật lần cuối: 2026-09-30 | Maintainer: Team Lead*

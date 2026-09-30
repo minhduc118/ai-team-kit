@@ -5,7 +5,7 @@
  * to determine which KB tools to call and with what parameters.
  */
 
-/** Supported tool names in the KB */
+/** Read-only tools the analyzer may call on its own — never a tool that writes or deletes */
 export type KBToolName =
   | 'xem_tong_quan'
   | 'xem_ngu_canh_du_an'
@@ -14,12 +14,10 @@ export type KBToolName =
   | 'xem_quyet_dinh'
   | 'xem_bai_hoc'
   | 'danh_sach_phien_gan_day'
-  | 'luu_tru_kien_thuc'
-  | 'phuc_hoi_kien_thuc'
   | 'xem_bieu_mau'
   | 'xem_khao_sat'
   | 'xem_dac_ta'
-  | 'luu_danh_gia';
+  | 'sep_danh_sach_change';
 
 /** Supported task types */
 export type TaskType = 'coding' | 'debug' | 'architecture' | 'general';
@@ -128,22 +126,6 @@ const KEYWORD_MAP: Record<KBToolName, KeywordEntry> = {
     baseScore: 3,
     taskTypeBoost: { general: 2 },
   },
-  luu_tru_kien_thuc: {
-    keywords: [
-      'archive', 'luu tru', 'lưu trữ', 'thung rac', 'thùng rác',
-      'xoa', 'xóa', 'delete', 'remove', 'superseded', 'cu', 'cũ'
-    ],
-    baseScore: 3,
-    taskTypeBoost: { general: 1 },
-  },
-  phuc_hoi_kien_thuc: {
-    keywords: [
-      'restore', 'khoi phuc', 'khôi phục', 'phuc hoi', 'phục hồi',
-      'unarchive', 'active'
-    ],
-    baseScore: 3,
-    taskTypeBoost: { general: 1 },
-  },
   xem_bieu_mau: {
     keywords: [
       'template', 'bieu mau', 'biểu mẫu', 'form', 'mau', 'mẫu', 'cau truc mau', 'cấu trúc mẫu'
@@ -165,13 +147,15 @@ const KEYWORD_MAP: Record<KBToolName, KeywordEntry> = {
     baseScore: 3,
     taskTypeBoost: { coding: 3, architecture: 2 },
   },
-  luu_danh_gia: {
+  sep_danh_sach_change: {
     keywords: [
-      'danh gia', 'đánh giá', 'review', 'verify', 'verification', 'kiem tra', 'kiểm tra', 'cham diem', 'chấm điểm'
+      'chuc nang', 'chức năng', 'feature', 'change', 'lam tiep', 'làm tiếp', 'tiep tuc', 'tiếp tục',
+      'tien do', 'tiến độ', 'buoc tiep theo', 'bước tiếp theo', 'sep', 'openspec', 'task', 'workflow',
+      'quy trinh', 'quy trình', 'approve', 'duyet', 'duyệt',
     ],
     baseScore: 3,
     taskTypeBoost: { coding: 2, general: 1 },
-  }
+  },
 };
 
 /** Regex patterns for extracting specific IDs from chatContext */
@@ -292,21 +276,7 @@ export function analyzeIntent(input: AnalyzerInput): ToolIntent[] {
   const extractedIds = extractIds(chatContext);
   const searchQuery = extractSearchQuery(chatContext);
 
-  const toolNames: KBToolName[] = [
-    'xem_tong_quan',
-    'xem_ngu_canh_du_an',
-    'tim_kiem_kien_thuc',
-    'xem_mau_thiet_ke',
-    'xem_quyet_dinh',
-    'xem_bai_hoc',
-    'danh_sach_phien_gan_day',
-    'luu_tru_kien_thuc',
-    'phuc_hoi_kien_thuc',
-    'xem_bieu_mau',
-    'xem_khao_sat',
-    'xem_dac_ta',
-    'luu_danh_gia'
-  ];
+  const toolNames = Object.keys(KEYWORD_MAP) as KBToolName[];
 
   const scored: ToolIntent[] = [];
 
@@ -343,24 +313,20 @@ export function analyzeIntent(input: AnalyzerInput): ToolIntent[] {
         params.days = 3;
         if (projectName) params.projectName = projectName;
         break;
-      case 'luu_tru_kien_thuc':
-        params.path = searchQuery; // Basic fallback
+      case 'xem_bieu_mau': {
+        const type = normalizedText.match(/\b(decision|lesson|pattern|session|exploration|spec|review)\b/)?.[1];
+        if (!type) continue;
+        params.type = type;
         break;
-      case 'phuc_hoi_kien_thuc':
-        params.path = searchQuery; // Basic fallback
-        break;
-      case 'xem_bieu_mau':
-        params.type = searchQuery; // Need a way to extract template type, but fallback to search query
-        break;
+      }
       case 'xem_khao_sat':
         params.explorationId = extractedIds.explorationId || searchQuery;
         break;
       case 'xem_dac_ta':
         params.specId = extractedIds.specId || searchQuery;
         break;
-      case 'luu_danh_gia':
-        if (projectName) params.projectName = projectName;
-        params.title = searchQuery;
+      case 'sep_danh_sach_change':
+        params.assignee = '*';
         break;
       // xem_tong_quan has no params
     }

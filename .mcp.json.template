@@ -10,8 +10,10 @@
       }
     },
     "team-knowledge-base-remote": {
-      "type": "streamable-http",
-      "serverURL": "https://<YOUR_RENDER_URL>/mcp"
+      "url": "https://<YOUR_RENDER_URL>/mcp",
+      "headers": {
+        "Authorization": "Bearer <YOUR_MCP_TOKEN>"
+      }
     }
   }
 }

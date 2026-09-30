@@ -6,7 +6,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { DataProvider } from './dataProvider.js';
+import { safeRelPath, type DataProvider } from './dataProvider.js';
+
+const IGNORED_DIRS = new Set(['node_modules', '.git', 'dist']);
 
 /**
  * Provides KB data access via local filesystem.
@@ -21,6 +23,16 @@ export class LocalProvider implements DataProvider {
     this.kbRoot = path.resolve(kbRoot);
   }
 
+  /** Absolute path inside the KB root; throws on anything that would escape it */
+  private full(relativePath: string): string {
+    const fullPath = path.resolve(this.kbRoot, safeRelPath(relativePath));
+    const rel = path.relative(this.kbRoot, fullPath);
+    if (rel.startsWith('..') || path.isAbsolute(rel)) {
+      throw new Error(`Đường dẫn nằm ngoài KB: ${relativePath}`);
+    }
+    return fullPath;
+  }
+
   /**
    * Reads a file from local filesystem.
    * @param relativePath - Path relative to KB root.
@@ -28,8 +40,8 @@ export class LocalProvider implements DataProvider {
    */
   async readFile(relativePath: string): Promise<string | null> {
     try {
-      const fullPath = path.join(this.kbRoot, relativePath);
-      if (!fs.existsSync(fullPath)) return null;
+      const fullPath = this.full(relativePath);
+      if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) return null;
       return fs.readFileSync(fullPath, 'utf8');
     } catch (error: any) {
       console.error(`[LocalProvider.readFile] Error reading ${relativePath}:`, error.message);
@@ -43,13 +55,8 @@ export class LocalProvider implements DataProvider {
    * @param content - Content to write.
    */
   async writeFile(relativePath: string, content: string): Promise<void> {
-    const fullPath = path.join(this.kbRoot, relativePath);
-    const dir = path.dirname(fullPath);
-
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
+    const fullPath = this.full(relativePath);
+    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
     fs.writeFileSync(fullPath, content, 'utf8');
   }
 
@@ -60,15 +67,25 @@ export class LocalProvider implements DataProvider {
    * @returns Array of relative file paths.
    */
   async listFiles(dirPath: string, pattern?: string): Promise<string[]> {
-    const fullDir = path.join(this.kbRoot, dirPath);
+    const relDir = safeRelPath(dirPath);
+    const fullDir = this.full(relDir);
     if (!fs.existsSync(fullDir)) return [];
 
-    const files = fs.readdirSync(fullDir, { recursive: true }) as string[];
     const ext = pattern?.replace('*', '') || '';
+    const files: string[] = [];
+    const walk = (rel: string) => {
+      for (const entry of fs.readdirSync(path.join(fullDir, rel), { withFileTypes: true })) {
+        const child = rel ? `${rel}/${entry.name}` : entry.name;
+        if (entry.isDirectory()) {
+          if (!IGNORED_DIRS.has(entry.name)) walk(child);
+        } else if (!ext || entry.name.endsWith(ext)) {
+          files.push(child);
+        }
+      }
+    };
+    walk('');
 
-    return files
-      .filter((f) => !ext || f.endsWith(ext))
-      .map((f) => path.join(dirPath, f).replace(/\\/g, '/'));
+    return files.map((f) => (relDir ? `${relDir}/${f}` : f));
   }
 
   /**
@@ -77,7 +94,11 @@ export class LocalProvider implements DataProvider {
    * @returns True if exists.
    */
   async fileExists(relativePath: string): Promise<boolean> {
-    return fs.existsSync(path.join(this.kbRoot, relativePath));
+    try {
+      return fs.existsSync(this.full(relativePath));
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -85,8 +106,8 @@ export class LocalProvider implements DataProvider {
    * @param relativePath - Path relative to KB root.
    */
   async deleteFile(relativePath: string): Promise<void> {
-    const fullPath = path.join(this.kbRoot, relativePath);
-    if (fs.existsSync(fullPath)) {
+    const fullPath = this.full(relativePath);
+    if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
       fs.unlinkSync(fullPath);
     }
   }
